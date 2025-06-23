@@ -1,0 +1,173 @@
+{
+  "name": "Generate Test Cases from Requirements",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "mode": "everyHour"
+          }
+        ]
+      },
+      "id": "1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sheetId": "",
+        "range": "Sheet1!A:D",
+        "options": {
+          "valueRenderMode": "FORMATTED_VALUE",
+          "dateTimeRenderOption": "FORMATTED_STRING"
+        }
+      },
+      "id": "2",
+      "name": "Read Requirements",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        450,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "Requirement",
+        "options": {}
+      },
+      "id": "3",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Read the below requirement and generate manual test cases using BVA and ECP methods:\n\n{{$json[\"Requirement\"]}}\n\nProvide output in a bullet point format."
+          }
+        ]
+      },
+      "id": "4",
+      "name": "Generate Test Cases",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 2,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sheetId": "",
+        "range": "OutputSheet!A2:H",
+        "options": {
+          "valueInputMode": "RAW"
+        },
+        "data": [
+          {
+            "values": [
+              "={{$json[\"ID\"]}}",
+              "={{$json[\"Feature\"]}}",
+              "={{$json[\"Requirement\"]}}",
+              "={{$json[\"Priority\"]}}",
+              "={{$json[\"choices\"][0][\"message\"][\"content\"]}}",
+              "",
+              "",
+              "Generated"
+            ]
+          }
+        ]
+      },
+      "id": "5",
+      "name": "Write to Output Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Requirements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Requirements": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Generate Test Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Test Cases": {
+      "main": [
+        [
+          {
+            "node": "Write to Output Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1750513984.613396"
+}
